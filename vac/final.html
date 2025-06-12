@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<a href=
+"index.html">Harry Potter Y Rick and Morty</a>
+<head>
+    <meta charset="UTF-8">
+    <title>Multiverso de Personajes</title>
+    <style>
+        :root {
+            --color-primario: #DAD7CD;
+            --color-secundario: #A3B18A;
+            --color-terciario: #588157;
+            --color-cuarto: #3A5A40;
+            --color-quinto: #344E41;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--color-primario);
+            font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+            margin: 0;
+        }
+
+        header {
+            padding: 15px;
+            display: flex;
+            justify-content: flex-end;
+            background-color: var(--color-cuarto);
+        }
+
+        .search {
+            background-color: white;
+            border: 5px solid var(--color-terciario);
+            border-radius: 50px;
+            font-size: 15px;
+            padding: 8px 15px;
+            color: var(--color-primario);
+        }
+
+        .search::placeholder {
+            color: var(--color-quinto);
+        }
+
+        .search:focus {
+            outline: none;
+            background-color: var(--color-terciario);
+        }
+
+        main {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .personaje {
+            width: 300px;
+            margin: 15px;
+            background-color: var(--color-cuarto);
+            box-shadow: 10px 15px 1px var(--color-secundario);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .personaje img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .personaje-info {
+            color: var(--color-quinto);
+            text-align: center;
+            padding: 10px;
+        }
+
+        .personaje-info h3 {
+            color: var(--color-primario);
+            margin: 5px 0;
+        }
+
+        .personaje-info h4 {
+            color: var(--color-terciario);
+            margin: 0;
+        }
+
+        .overview {
+            background-color: var(--color-secundario);
+            padding: 10px;
+            font-size: 14px;
+            height: 100px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .personaje:hover .overview {
+            background-color: var(--color-terciario);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <form id="form">
+        <input type="text" id="search" class="search" placeholder="Busca tu personaje">
+    </form>
+</header>
+
+<main id="main"></main>
+
+<script>
+    const API_HP = 'https://hp-api.onrender.com/api/characters';
+    const API_RM = 'https://rickandmortyapi.com/api/character';
+    const main = document.getElementById('main');
+    const form = document.getElementById('form');
+    const search = document.getElementById('search');
+
+    let allCharacters = [];
+
+    async function getAllCharacters() {
+        try {
+            const [hpRes, rmRes] = await Promise.all([
+                fetch(API_HP),
+                fetch(API_RM)
+            ]);
+
+            if (!hpRes.ok || !rmRes.ok) {
+                throw new Error('Error al obtener los datos de las APIs');
+            }
+
+            const hpData = await hpRes.json();
+            const rmData = await rmRes.json();
+
+            const hpCharacters = hpData.map(char => ({
+                name: char.name,
+                species: char.species,
+                gender: char.gender,
+                image: char.image || 'https://via.placeholder.com/300x300?text=No+Image',
+                origin: 'Harry Potter'
+            }));
+
+            const rmCharacters = rmData.results ? rmData.results.map(char => ({
+                name: char.name,
+                species: char.species,
+                gender: char.gender,
+                image: char.image,
+                origin: 'Rick and Morty'
+            })) : [];
+
+            allCharacters = [...hpCharacters, ...rmCharacters];
+            showCharacters(allCharacters);
+        } catch (error) {
+            console.error('Error obteniendo los personajes:', error);
+        }
+    }
+
+    function showCharacters(characters) {
+        main.innerHTML = '';
+        characters.forEach(char => {
+            const charElement = document.createElement('div');
+            charElement.classList.add('personaje');
+            charElement.innerHTML = `
+                <img src="${char.image}" alt="${char.name}">
+                <div class="personaje-info">
+                    <h3>${char.name}</h3>
+                    <h4>${char.origin}</h4>
+                </div>
+                <div class="overview">
+                    <p><strong>Especie:</strong> ${char.species}</p>
+                    <p><strong>Género:</strong> ${char.gender}</p>
+                </div>
+            `;
+            main.appendChild(charElement);
+        });
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const searchTerm = search.value.toLowerCase();
+        if (searchTerm) {
+            const filtered = allCharacters.filter(c => c.name.toLowerCase().includes(searchTerm));
+            showCharacters(filtered);
+        } else {
+            showCharacters(allCharacters);
+        }
+    });
+
+    getAllCharacters();
+</script>
+
+</body>
+</html>
